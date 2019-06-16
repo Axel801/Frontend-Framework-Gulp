@@ -10,14 +10,39 @@
     let uglify = require('gulp-uglify');
     let watch = require('gulp-watch');
     let file = require('gulp-file');
+    let browserSync = require('browser-sync').create();
+
+    let paths = {
+        default: './',
+        dev: {
+            default: 'dev',
+            scss: 'dev/scss/styles.scss',
+            jsScript: 'dev/js/scripts.js',
+            jsDependencies: 'dev/js/*.js',
+            jsNotDefault: '!dev/js/scripts.js',
+            fonts: 'dev/fonts/*',
+            css: 'dev/css/*.css',
+            images: 'dev/images/*',
+            pug: 'dev/pug/*.pug',
+
+        },
+        dist: {
+            default: 'dist',
+            css: 'dist/css',
+            fonts: 'dist/fonts',
+            js: 'dist/js',
+            images: 'dist/images'
+        }
+    }
 
 
     //Mueve las fuentes a la carpeta public/fonts
     gulp.task('fonts', fonts);
 
     function fonts() {
-        return gulp.src('dev/fonts/*')
-            .pipe(gulp.dest('public/fonts'));
+        return gulp.src(paths.dev.fonts)
+            .pipe(gulp.dest(paths.dist.fonts))
+            .pipe(browserSync.stream());
     };
 
 
@@ -25,77 +50,80 @@
     gulp.task('min-scripts', min_scripts);
 
     function min_scripts() {
-        return gulp.src('dev/js/scripts.js')
+        return gulp.src(paths.dev.jsScript)
             .pipe(sourcemaps.init())
             .pipe(uglify())
             .pipe(rename('scripts.min.js'))
-            .pipe(sourcemaps.write('../../public/js'))
-            .pipe(gulp.dest('public/js'));
+            .pipe(sourcemaps.write(paths.default))
+            .pipe(gulp.dest(paths.dist.js))
+            .pipe(browserSync.stream());
     }
 
     //Mueve el scripts.js a public/js
     gulp.task('expanded-scripts', expanded_scripts);
 
     function expanded_scripts() {
-        return gulp.src('dev/js/scripts.js')
+        return gulp.src(paths.dev.jsScript)
             .pipe(sourcemaps.init())
-            .pipe(sourcemaps.write('../../public/js'))
-            .pipe(gulp.dest('public/js'));
+            .pipe(sourcemaps.write(paths.default))
+            .pipe(gulp.dest(paths.dist.js))
+
     }
 
     //Crea el fichero styles.min.css en public/css
     function min_css() {
-        return gulp.src('dev/sass/styles.scss')
+        return gulp.src(paths.dev.scss)
             .pipe(sourcemaps.init())
             .pipe(sass({outputStyle: 'compressed'}).on('error', sass.logError))
-            .pipe(autoprefixer({
-                browsers: ['last 2 versions'],
-            }))
+            .pipe(autoprefixer())
             .pipe(rename('styles.min.css'))
-            .pipe(sourcemaps.write('../../public/css'))
-            .pipe(gulp.dest('public/css'));
+            .pipe(sourcemaps.write(paths.default))
+            .pipe(gulp.dest(paths.dist.css))
+
+
     }
 
     //Crea el fichero styles.css en public/css
     function expand_css() {
-        return gulp.src('dev/sass/styles.scss')
+        return gulp.src(paths.dev.scss)
             .pipe(sourcemaps.init())
             .pipe(sass({outputStyle: 'expanded'}).on('error', sass.logError))
-            .pipe(autoprefixer({
-                browsers: ['last 2 versions'],
-            }))
-            .pipe(sourcemaps.write('../../public/css'))
-            .pipe(gulp.dest('public/css'));
+            .pipe(autoprefixer())
+            .pipe(sourcemaps.write(paths.default))
+            .pipe(gulp.dest(paths.dist.css))
+            .pipe(browserSync.stream());
     }
 
     //Mover los CSS de las distintas librerías
     function move_css() {
-        return gulp.src('dev/css/*.css')
-            .pipe(gulp.dest('public/css'));
+        return gulp.src(paths.dev.css)
+            .pipe(gulp.dest(paths.dist.css))
+            .pipe(browserSync.stream());
     }
 
     //Mover los JS de las distintas librerías
     function move_js() {
-        return gulp.src(['dev/js/*.js', '!dev/js/scripts.js'])
-            .pipe(gulp.dest('public/css'));
+        return gulp.src([paths.dev.jsDependencies, paths.dev.jsNotDefault])
+            .pipe(gulp.dest(paths.dist.js));
     }
 
     //Mueve las imagenes a public/images
     gulp.task('images', images);
 
     function images() {
-        return gulp.src('dev/images/*')
-            .pipe(gulp.dest('public/images'));
+        return gulp.src(paths.dev.images)
+            .pipe(gulp.dest(paths.dist.images));
     }
 
     gulp.task('compile_pug', compile_pug);
 
     function compile_pug() {
-        return gulp.src('dev/pug/*.pug')
+        return gulp.src(paths.dev.pug)
             .pipe(pug({
                 pretty: true
             }))
-            .pipe(gulp.dest('public'));
+            .pipe(gulp.dest(paths.dist.default))
+            .pipe(browserSync.stream());
     }
 
 
@@ -112,35 +140,44 @@
     //Watchers
     //gulp.task('watch', watchAll);
     function watchAll() {
-        gulp.watch('dev/js/**/*.js', exports.js);
-        gulp.watch('dev/sass/**/*.scss', exports.css);
-        gulp.watch('dev/pug/**/*.pug', compile_pug);
-        gulp.watch('dev/fonts/**/*.*', fonts);
-        gulp.watch('dev/images/**/*.*', images);
+        //Creamos el browserSync
+        //Para que actualice el navegador es necesario tener en el pug la estructura básica HTML
+        browserSync.init({
+            server: paths.dist.default
+        });
+
+        gulp.watch(paths.dev.default + '/js/**/*.js', exports.js).on('change', browserSync.reload);
+        gulp.watch(paths.dev.default + '/scss/**/*.scss', exports.css).on('change', browserSync.reload);
+        gulp.watch(paths.dev.default + '/pug/**/*.pug', compile_pug).on('change', browserSync.reload);
+        gulp.watch(paths.dev.default + '/fonts/**/*.*', fonts).on('change', browserSync.reload);
+        gulp.watch(paths.dev.default + '/images/**/*.*', images).on('change', browserSync.reload);
+        return;
     }
 
 
     //Al hacer 'gulp init' se crea el framework
-    exports.init = gulp.series(init,init_files);
+    exports.init = gulp.series(init, init_files);
+
     function init() {
         return gulp.src('*.*', {read: false})
-            .pipe(gulp.dest('dev/css'))
-            .pipe(gulp.dest('dev/fonts'))
-            .pipe(gulp.dest('dev/images'))
-            .pipe(gulp.dest('dev/js'))
-            .pipe(gulp.dest('dev/pug/components'))
-            .pipe(gulp.dest('dev/sass/components'))
+            .pipe(gulp.dest(paths.dev.default + '/css'))
+            .pipe(gulp.dest(paths.dev.default + '/fonts'))
+            .pipe(gulp.dest(paths.dev.default + '/images'))
+            .pipe(gulp.dest(paths.dev.default + '/js'))
+            .pipe(gulp.dest(paths.dev.default + '/pug/components'))
+            .pipe(gulp.dest(paths.dev.default + '/scss/components'))
     }
+
     //Creamos los ficheros
     function init_files() {
         let js = file('scripts.js', '')
-            .pipe(gulp.dest('dev/js'));
+            .pipe(gulp.dest(paths.dev.default + '/js'));
         let css = file('styles.scss', '')
-            .pipe(gulp.dest('dev/sass'));
+            .pipe(gulp.dest(paths.dev.default + '/scss'));
         let css_var = file('_variables.scss', '')
-            .pipe(gulp.dest('dev/sass/components'));
+            .pipe(gulp.dest(paths.dev.default + '/scss/components'));
         let pug = file('index.pug', '')
-            .pipe(gulp.dest('dev/pug'));
+            .pipe(gulp.dest(paths.dev.default + '/pug'));
         return gulp.src('*.*');
     }
 })();
