@@ -54,7 +54,7 @@
             .pipe(sourcemaps.init())
             .pipe(uglify())
             .pipe(rename('scripts.min.js'))
-            .pipe(sourcemaps.write(paths.default))
+            //.pipe(sourcemaps.write(paths.default))
             .pipe(gulp.dest(paths.dist.js))
             .pipe(browserSync.stream());
     }
@@ -65,7 +65,7 @@
     function expanded_scripts() {
         return gulp.src(paths.dev.jsScript)
             .pipe(sourcemaps.init())
-            .pipe(sourcemaps.write(paths.default))
+           // .pipe(sourcemaps.write(paths.default))
             .pipe(gulp.dest(paths.dist.js))
 
     }
@@ -77,7 +77,7 @@
             .pipe(sass({outputStyle: 'compressed'}).on('error', sass.logError))
             .pipe(autoprefixer())
             .pipe(rename('styles.min.css'))
-            .pipe(sourcemaps.write(paths.default))
+            //.pipe(sourcemaps.write(paths.default))
             .pipe(gulp.dest(paths.dist.css))
 
 
@@ -89,7 +89,7 @@
             .pipe(sourcemaps.init())
             .pipe(sass({outputStyle: 'expanded'}).on('error', sass.logError))
             .pipe(autoprefixer())
-            .pipe(sourcemaps.write(paths.default))
+            //.pipe(sourcemaps.write(paths.default))
             .pipe(gulp.dest(paths.dist.css))
             .pipe(browserSync.stream());
     }
@@ -112,7 +112,8 @@
 
     function images() {
         return gulp.src(paths.dev.images)
-            .pipe(gulp.dest(paths.dist.images));
+            .pipe(gulp.dest(paths.dist.images))
+            .pipe(browserSync.stream());
     }
 
     gulp.task('compile_pug', compile_pug);
@@ -149,8 +150,8 @@
         gulp.watch(paths.dev.default + '/js/**/*.js', exports.js).on('change', browserSync.reload);
         gulp.watch(paths.dev.default + '/scss/**/*.scss', exports.css).on('change', browserSync.reload);
         gulp.watch(paths.dev.default + '/pug/**/*.pug', compile_pug).on('change', browserSync.reload);
-        gulp.watch(paths.dev.default + '/fonts/**/*.*', fonts).on('change', browserSync.reload);
-        gulp.watch(paths.dev.default + '/images/**/*.*', images).on('change', browserSync.reload);
+       // gulp.watch(paths.dev.default + '/fonts/**/*.*', fonts).on('change', browserSync.reload);
+        //gulp.watch(paths.dev.default + '/images/**/*.*', images).on('change', browserSync.reload);
         return;
     }
 
