@@ -11,6 +11,7 @@
     let watch = require('gulp-watch');
     let file = require('gulp-file');
     let browserSync = require('browser-sync').create();
+    let babel = require('gulp-babel');
 
     let paths = {
         default: './',
@@ -51,7 +52,10 @@
 
     function min_scripts() {
         return gulp.src(paths.dev.jsScript)
-            .pipe(sourcemaps.init())
+            // .pipe(sourcemaps.init())
+            .pipe(babel({
+                presets: ['@babel/preset-env']
+            }))
             .pipe(uglify())
             .pipe(rename('scripts.min.js'))
             //.pipe(sourcemaps.write(paths.default))
@@ -64,8 +68,11 @@
 
     function expanded_scripts() {
         return gulp.src(paths.dev.jsScript)
-            .pipe(sourcemaps.init())
-           // .pipe(sourcemaps.write(paths.default))
+            // .pipe(sourcemaps.init())
+            .pipe(babel({
+                presets: ['@babel/preset-env']
+            }))
+            // .pipe(sourcemaps.write(paths.default))
             .pipe(gulp.dest(paths.dist.js))
 
     }
@@ -74,7 +81,7 @@
     function min_css() {
         return gulp.src(paths.dev.scss)
             .pipe(sourcemaps.init())
-            .pipe(sass({outputStyle: 'compressed'}).on('error', sass.logError))
+            .pipe(sass({ outputStyle: 'compressed' }).on('error', sass.logError))
             .pipe(autoprefixer())
             .pipe(rename('styles.min.css'))
             //.pipe(sourcemaps.write(paths.default))
@@ -87,7 +94,7 @@
     function expand_css() {
         return gulp.src(paths.dev.scss)
             .pipe(sourcemaps.init())
-            .pipe(sass({outputStyle: 'expanded'}).on('error', sass.logError))
+            .pipe(sass({ outputStyle: 'expanded' }).on('error', sass.logError))
             .pipe(autoprefixer())
             //.pipe(sourcemaps.write(paths.default))
             .pipe(gulp.dest(paths.dist.css))
@@ -150,7 +157,7 @@
         gulp.watch(paths.dev.default + '/js/**/*.js', exports.js).on('change', browserSync.reload);
         gulp.watch(paths.dev.default + '/scss/**/*.scss', exports.css).on('change', browserSync.reload);
         gulp.watch(paths.dev.default + '/pug/**/*.pug', compile_pug).on('change', browserSync.reload);
-       // gulp.watch(paths.dev.default + '/fonts/**/*.*', fonts).on('change', browserSync.reload);
+        // gulp.watch(paths.dev.default + '/fonts/**/*.*', fonts).on('change', browserSync.reload);
         //gulp.watch(paths.dev.default + '/images/**/*.*', images).on('change', browserSync.reload);
         return;
     }
@@ -160,7 +167,7 @@
     exports.init = gulp.series(init, init_files);
 
     function init() {
-        return gulp.src('*.*', {read: false})
+        return gulp.src('*.*', { read: false })
             .pipe(gulp.dest(paths.dev.default + '/css'))
             .pipe(gulp.dest(paths.dev.default + '/fonts'))
             .pipe(gulp.dest(paths.dev.default + '/images'))
