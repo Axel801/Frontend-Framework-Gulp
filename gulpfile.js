@@ -139,8 +139,18 @@
 
     //Para hacer varias tareas a la vez
     //exports.'nombre de la tarea'
-    exports.css = gulp.parallel(expand_css, min_css, move_css);
-    exports.js = gulp.parallel(expanded_scripts, min_scripts, move_js);
+    exports.css = gulp.parallel(expand_css, move_css);
+    exports.js = gulp.parallel(expanded_scripts, move_js);
+
+
+
+    //Production
+    exports.css_prod = gulp.parallel(expand_css, min_css, move_css);
+    exports.js_prod = gulp.parallel(expanded_scripts, min_scripts, move_js);
+
+    //Al hacer 'gulp prod' se crea el framework
+    exports.prod = gulp.series(exports.css_prod, exports.js_prod);
+
 
     //Usamos default para solo poner gulp en la consola
     exports.default = gulp.series(exports.css, exports.js, compile_pug, images, fonts, watchAll);
@@ -153,11 +163,16 @@
         browserSync.init({
             server: paths.dist.default
         });
+        //Primero compilamos todo
+        gulp.watch(paths.dev.default + '/js/**/*.js', exports.js);
+        gulp.watch(paths.dev.default + '/scss/**/*.scss', exports.css);
+        gulp.watch(paths.dev.default + '/pug/**/*.pug', compile_pug);
 
-        gulp.watch(paths.dev.default + '/js/**/*.js', exports.js).on('change', browserSync.reload);
-        gulp.watch(paths.dev.default + '/scss/**/*.scss', exports.css).on('change', browserSync.reload);
-        gulp.watch(paths.dev.default + '/pug/**/*.pug', compile_pug).on('change', browserSync.reload);
-        // gulp.watch(paths.dev.default + '/fonts/**/*.*', fonts).on('change', browserSync.reload);
+        //Luego actualizamos el server
+        gulp.watch(paths.dist.default+ '**/*.html').on('change',browserSync.reload);
+        gulp.watch(paths.dist.default+ '/js/**/*.js').on('change',browserSync.reload);
+        gulp.watch(paths.dist.default+ '/css/**/*.css').on('change',browserSync.reload);
+        //gulp.watch(paths.dev.default + '/fonts/**/*.*', fonts).on('change', browserSync.reload);
         //gulp.watch(paths.dev.default + '/images/**/*.*', images).on('change', browserSync.reload);
         return;
     }
